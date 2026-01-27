@@ -836,8 +836,8 @@ function initFireflies(){
   resize();
 
   const CFG = {
-    count: 20,
-    maxCount: 35,
+    count: 28,
+    maxCount: 50,
     maxSpeed: 30,
     friction: 0.988,
     attract: 60,
