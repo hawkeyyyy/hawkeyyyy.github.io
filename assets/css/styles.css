@@ -842,6 +842,14 @@ input::placeholder, textarea::placeholder{ color: var(--muted); }
   padding-top:16px;
   font-size:.82rem;
 }
+.footer .secret-link{
+  color: var(--muted);
+  text-decoration: none;
+}
+.footer .secret-link:hover{
+  color: var(--text);
+  text-decoration: none;
+}
 
 @media (max-width: 920px){
   .hero{ grid-template-columns: 1fr; }

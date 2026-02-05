@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Waves (legacy)</title>
+  <meta name="description" content="Hidden portfolio summary in a Neovim + Linux UI theme." />
+  <meta name="theme-color" content="#0b1016" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0a0f14;
+      --bg-2:#0c1118;
+      --panel:#0f151d;
+      --panel-2:#111a24;
+      --text:#e7edf5;
+      --muted:#9aa6b2;
+      --border:#1a2430;
+      --accent:#6b8cff;
+      --accent-2:#53c6a2;
+      --accent-3:#d6a86b;
+      --shadow:0 20px 50px rgba(2,7,13,.5);
+      --radius:12px;
+      --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans:"Fira Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      color:var(--text);
+      font-family:var(--sans);
+    }
+
+    a{ color:inherit; text-decoration:none; }
+
+    body.splash-active{ overflow:hidden; }
+
+    .splash{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:grid;
+      place-items:center;
+      background:rgba(8,12,18,.94);
+      backdrop-filter: blur(6px);
+    }
+
+    .splash.is-hidden{
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .25s ease;
+    }
+
+    .splash-panel{
+      width:min(760px, 92vw);
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:24px;
+      display:grid;
+      gap:18px;
+    }
+
+    .splash-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      font-family:var(--mono);
+    }
+
+    .splash-title{
+      font-size:1rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    .splash-hint{
+      font-size:.8rem;
+      color:var(--muted);
+    }
+
+    .splash-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+
+    .menu{
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+      background:rgba(10,16,22,.65);
+      display:grid;
+      gap:10px;
+    }
+
+    .menu-title{
+      font-family:var(--mono);
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.18em;
+      color:var(--muted);
+    }
+
+    .menu-list{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:grid;
+      gap:6px;
+      font-family:var(--mono);
+      font-size:.92rem;
+    }
+
+    .menu-item{
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid transparent;
+      color:var(--muted);
+      cursor:pointer;
+    }
+
+    .menu-item.active{
+      border-color:rgba(107,140,255,.35);
+      background:rgba(107,140,255,.12);
+      color:var(--text);
+    }
+
+    .cmdline{
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+      background:rgba(10,16,22,.7);
+      font-family:var(--mono);
+      display:grid;
+      gap:8px;
+    }
+
+    .cmd-label{
+      color:var(--muted);
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.18em;
+    }
+
+    .cmd-input{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:1rem;
+      color:var(--text);
+    }
+
+    .cmd-prefix{
+      color:var(--accent-2);
+      font-weight:600;
+    }
+
+    .cmd-value{
+      min-height:1.2em;
+    }
+
+    .cmd-hint{
+      color:var(--muted);
+      font-size:.8rem;
+    }
+
+    .splash-note{
+      border:1px dashed rgba(95,198,162,.45);
+      border-radius:10px;
+      padding:12px;
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.5;
+    }
+
+    .desktop{
+      min-height:100vh;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 20px;
+      background:rgba(10,15,20,.92);
+      border-bottom:1px solid var(--border);
+      backdrop-filter: blur(8px);
+      font-size:.9rem;
+    }
+
+    .top-left, .top-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .logo{
+      width:28px;
+      height:28px;
+      border-radius:8px;
+      background:var(--accent);
+      color:#0b1016;
+      display:grid;
+      place-items:center;
+      font-weight:700;
+      font-family:var(--mono);
+      box-shadow:var(--shadow);
+    }
+
+    .top-title{
+      font-weight:600;
+      letter-spacing:.02em;
+    }
+
+    .top-center{
+      color:var(--muted);
+      font-family:var(--mono);
+      font-size:.85rem;
+    }
+
+    .chip{
+      padding:4px 8px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      font-family:var(--mono);
+      font-size:.75rem;
+      color:var(--muted);
+      background:rgba(18,26,36,.75);
+    }
+
+    .window{
+      width:min(1200px, 94vw);
+      margin:24px auto;
+      display:grid;
+      grid-template-columns:220px 1fr 220px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .sidebar, .rightbar{
+      background:var(--panel-2);
+      border-right:1px solid var(--border);
+      padding:16px;
+      display:grid;
+      gap:16px;
+      font-size:.9rem;
+    }
+
+    .rightbar{
+      border-right:none;
+      border-left:1px solid var(--border);
+    }
+
+    .pane-title{
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      font-size:.7rem;
+      color:var(--muted);
+    }
+
+    .tree, .marks{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:grid;
+      gap:8px;
+      font-family:var(--mono);
+      color:var(--muted);
+    }
+
+    .tree li, .marks li{
+      padding:4px 6px;
+      border-radius:8px;
+    }
+
+    .tree li{ cursor:pointer; }
+
+    .tree li.active{
+      background:rgba(122,162,247,.16);
+      color:var(--text);
+      border:1px solid rgba(122,162,247,.28);
+    }
+
+    .tree li span{
+      color:var(--accent-2);
+    }
+
+    .editor{
+      display:flex;
+      flex-direction:column;
+      min-height:520px;
+    }
+
+    .tabbar{
+      display:flex;
+      gap:8px;
+      padding:10px 14px;
+      border-bottom:1px solid var(--border);
+      background:rgba(18,26,36,.9);
+      font-family:var(--mono);
+      font-size:.85rem;
+    }
+
+    .tab{
+      padding:6px 10px;
+      border-radius:8px;
+      color:var(--muted);
+      border:1px solid transparent;
+      cursor:pointer;
+    }
+
+    .tab.active{
+      color:var(--text);
+      border-color:rgba(122,162,247,.4);
+      background:rgba(122,162,247,.12);
+    }
+
+    .buffer{
+      padding:20px 22px 26px;
+      display:grid;
+      gap:18px;
+      background:linear-gradient(180deg, rgba(15,21,29,.85), rgba(15,21,29,.65));
+    }
+
+    .buffer-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .buffer-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-family:var(--mono);
+      color:var(--muted);
+      font-size:.85rem;
+    }
+
+    .mode{
+      padding:4px 8px;
+      background:var(--accent-2);
+      color:#0b1016;
+      border-radius:6px;
+      font-weight:700;
+      font-size:.75rem;
+      letter-spacing:.04em;
+    }
+
+    .return-link{
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid rgba(224,175,104,.4);
+      color:var(--accent-3);
+      font-family:var(--mono);
+      font-size:.8rem;
+    }
+
+    .lead{
+      margin:0;
+      color:var(--muted);
+      font-size:1rem;
+      max-width:70ch;
+    }
+
+    .window-stack{
+      display:grid;
+      gap:16px;
+    }
+
+    .vim-window{
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:rgba(10,16,22,.72);
+      display:none;
+      overflow:hidden;
+      box-shadow:0 18px 40px rgba(2,7,13,.4);
+    }
+
+    .vim-window.active{ display:grid; }
+
+    .vim-titlebar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      background:rgba(13,20,28,.92);
+      font-family:var(--mono);
+      font-size:.82rem;
+      color:var(--muted);
+    }
+
+    .vim-file{
+      color:var(--text);
+      font-weight:600;
+    }
+
+    .vim-body{
+      padding:16px;
+      display:grid;
+      gap:12px;
+    }
+
+    .card{
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:14px;
+      background:rgba(12,18,25,.75);
+      display:grid;
+      gap:8px;
+    }
+
+    .card h3{
+      margin:0;
+      font-size:.98rem;
+      font-weight:600;
+    }
+
+    .card p{
+      margin:0;
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.5;
+    }
+
+    .list{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:grid;
+      gap:6px;
+      font-size:.9rem;
+      color:var(--muted);
+    }
+
+    .list li::before{
+      content:"~";
+      color:var(--accent);
+      font-family:var(--mono);
+      margin-right:6px;
+    }
+
+    .pillbox{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .pill{
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(122,162,247,.3);
+      font-size:.75rem;
+      font-family:var(--mono);
+      color:var(--text);
+    }
+
+    .links{
+      display:grid;
+      gap:6px;
+      font-family:var(--mono);
+      font-size:.82rem;
+    }
+
+    .links a{
+      color:var(--accent);
+    }
+
+    .note{
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px dashed rgba(95,215,167,.4);
+      background:rgba(8,16,22,.6);
+      font-family:var(--mono);
+      font-size:.85rem;
+      color:var(--muted);
+    }
+
+    .stat{
+      display:grid;
+      gap:4px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:rgba(10,16,22,.6);
+      font-size:.85rem;
+    }
+
+    .stat strong{
+      color:var(--text);
+      font-weight:600;
+    }
+
+    .statusline{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 18px;
+      border-top:1px solid var(--border);
+      background:rgba(12,18,25,.95);
+      font-family:var(--mono);
+      font-size:.8rem;
+      color:var(--muted);
+    }
+
+    .status-left, .status-right{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .status-pill{
+      padding:4px 8px;
+      border-radius:6px;
+      background:rgba(122,162,247,.18);
+      color:var(--text);
+      font-weight:600;
+    }
+
+    .status-link{
+      color:var(--accent-3);
+      border:1px solid rgba(224,175,104,.4);
+      border-radius:6px;
+      padding:3px 7px;
+    }
+
+    @media (max-width: 980px){
+      .window{
+        grid-template-columns:1fr;
+      }
+      .sidebar, .rightbar{
+        border-right:none;
+        border-left:none;
+        border-bottom:1px solid var(--border);
+      }
+      .rightbar{
+        border-top:1px solid var(--border);
+        border-bottom:none;
+      }
+    }
+
+    @media (max-width: 720px){
+      .top-center{ display:none; }
+      .window{ margin:16px auto; }
+      .splash-grid{ grid-template-columns:1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ scroll-behavior:auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash" id="splash" role="dialog" aria-modal="true" aria-label="Neovim menu">
+    <div class="splash-panel">
+      <div class="splash-head">
+        <div class="splash-title">Neovim Splash Menu</div>
+        <div class="splash-hint">Use arrows or Ctrl+J / Ctrl+K, type a command, press `Enter`.</div>
+      </div>
+      <div class="splash-grid">
+        <div class="menu">
+          <div class="menu-title">Navigation</div>
+          <ul class="menu-list" id="menuList">
+            <li class="menu-item active" data-key="about">about</li>
+            <li class="menu-item" data-key="focus">focus</li>
+            <li class="menu-item" data-key="skills">skills</li>
+            <li class="menu-item" data-key="projects">projects</li>
+            <li class="menu-item" data-key="education">education</li>
+            <li class="menu-item" data-key="contact">contact</li>
+            <li class="menu-item" data-key="notes">notes</li>
+          </ul>
+        </div>
+        <div class="cmdline">
+          <div class="cmd-label">Command</div>
+          <div class="cmd-input">
+            <span class="cmd-prefix">:</span>
+            <span class="cmd-value" id="cmdValue"></span>
+          </div>
+          <div class="cmd-hint" id="cmdHint">Type `about`, `projects`, `skills`...</div>
+        </div>
+      </div>
+      <div class="splash-note">
+        This splash acts like a Neovim start screen. Navigate with keys or type a command,
+        then press Enter to jump into the selected topic.
+      </div>
+    </div>
+  </div>
+
+  <div class="desktop">
+    <header class="topbar">
+      <div class="top-left">
+        
+        <div class="top-title">/home/samyog/schoolportfolio</div>
+      </div>
+      <div class="top-right">
+        <span class="chip">cpu 14%</span>
+        <span class="chip">ram 46%</span>
+        <span class="chip">wifi ok</span>
+      </div>
+    </header>
+
+    <main class="window">
+      <aside class="sidebar">
+        <div class="pane-title">Explorer</div>
+        <ul class="tree">
+          <li class="active" data-window="about" data-file="about.md"><span>~</span> about.md</li>
+          <li data-window="focus" data-file="focus.md">focus.md</li>
+          <li data-window="skills" data-file="skills.yml">skills.yml</li>
+          <li data-window="projects" data-file="projects.yaml">projects.yaml</li>
+          <li data-window="education" data-file="education.json">education.json</li>
+          <li data-window="contact" data-file="contact.txt">contact.txt</li>
+          <li data-window="notes" data-file="notes.md">notes.md</li>
+        </ul>
+
+        <div class="pane-title">Marks</div>
+        <ul class="marks">
+          <li>mA About</li>
+          <li>mS Skills</li>
+          <li>mE Education</li>
+          <li>mP Projects</li>
+          <li>mC Contact</li>
+        </ul>
+      </aside>
+
+      <section class="editor">
+        <div class="tabbar">
+          <div class="tab active" data-window="about" data-file="about.md">about.md</div>
+          <div class="tab" data-window="focus" data-file="focus.md">focus.md</div>
+          <div class="tab" data-window="skills" data-file="skills.yml">skills.yml</div>
+          <div class="tab" data-window="projects" data-file="projects.yaml">projects.yaml</div>
+          <div class="tab" data-window="education" data-file="education.json">education.json</div>
+          <div class="tab" data-window="contact" data-file="contact.txt">contact.txt</div>
+          <div class="tab" data-window="notes" data-file="notes.md">notes.md</div>
+        </div>
+
+        <div class="buffer">
+          <div class="buffer-head">
+            <div class="buffer-title">
+              <span class="mode">NORMAL</span>
+              <span id="bufferPath">/home/samyog/schoolportfolio/about.md</span>
+            </div>
+            <a class="return-link" href="./index.html">return to index</a>
+          </div>
+          <div class="window-stack" id="windowStack">
+            <article class="vim-window active" data-window="about" data-file="about.md">
+              <div class="vim-titlebar">
+                <span class="vim-file">about.md</span>
+                <span>markdown</span>
+              </div>
+              <div class="vim-body">
+                <p class="lead">
+                  Summary: final-year Computer Engineering student focused on GIS, remote sensing, and machine learning,
+                  building clean pipelines from raw rasters to decision-ready maps.
+                </p>
+                <p>Builds reproducible geospatial ML workflows with clear documentation and deployable utilities.</p>
+              </div>
+            </article>
+
+            <article class="vim-window" data-window="focus" data-file="focus.md">
+              <div class="vim-titlebar">
+                <span class="vim-file">focus.md</span>
+                <span>markdown</span>
+              </div>
+              <div class="vim-body">
+                <ul class="list">
+                  <li>Flood susceptibility mapping (CNN + RF)</li>
+                  <li>Landfill suitability mapping (segmentation)</li>
+                  <li>Feature rasters, CRS alignment, tiling</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="vim-window" data-window="skills" data-file="skills.yml">
+              <div class="vim-titlebar">
+                <span class="vim-file">skills.yml</span>
+                <span>yaml</span>
+              </div>
+              <div class="vim-body">
+                <div class="pillbox">
+                  <span class="pill">Python</span>
+                  <span class="pill">C/C++</span>
+                  <span class="pill">QGIS</span>
+                  <span class="pill">GDAL</span>
+                  <span class="pill">Rasterio</span>
+                  <span class="pill">TensorFlow</span>
+                  <span class="pill">PyTorch</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="vim-window" data-window="projects" data-file="projects.yaml">
+              <div class="vim-titlebar">
+                <span class="vim-file">projects.yaml</span>
+                <span>yaml</span>
+              </div>
+              <div class="vim-body">
+                <ul class="list">
+                  <li>Landfill suitability mapping - major project</li>
+                  <li>Pluvial flood susceptibility - CNN + RF</li>
+                  <li>3D world rendering - OpenGL</li>
+                  <li>Flappy Bird clone - C++</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="vim-window" data-window="education" data-file="education.json">
+              <div class="vim-titlebar">
+                <span class="vim-file">education.json</span>
+                <span>json</span>
+              </div>
+              <div class="vim-body">
+                <ul class="list">
+                  <li>B.E. Computer Engineering - Final Year</li>
+                  <li>Kathmandu Bernhardt College - Science</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="vim-window" data-window="contact" data-file="contact.txt">
+              <div class="vim-titlebar">
+                <span class="vim-file">contact.txt</span>
+                <span>text</span>
+              </div>
+              <div class="vim-body">
+                <div class="links">
+                  <a href="mailto:gcsamyog77@gmail.com">gcsamyog77@gmail.com</a>
+                  <a href="https://github.com/hawkeyyyy" target="_blank" rel="noreferrer">github.com/hawkeyyyy</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="vim-window" data-window="notes" data-file="notes.md">
+              <div class="vim-titlebar">
+                <span class="vim-file">notes.md</span>
+                <span>markdown</span>
+              </div>
+              <div class="vim-body">
+                <div class="note">
+                  extra nuances: prefers clean experiments, readable notebooks, and maps that explain risk without noise.
+                  currently refining segmentation labels and documenting GIS workflows.
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <aside class="rightbar">
+        <div class="pane-title">System</div>
+        <div class="stat">
+          <strong>Mode</strong>
+          Research + production-minded ML
+        </div>
+        <div class="stat">
+          <strong>Stack</strong>
+          QGIS, GDAL, Rasterio, TensorFlow, PyTorch
+        </div>
+        <div class="stat">
+          <strong>Now</strong>
+          Flood mapping, landfill suitability, segmentation
+        </div>
+        <div class="stat">
+          <strong>Status</strong>
+          Open to research collaboration
+        </div>
+      </aside>
+    </main>
+
+    <footer class="statusline">
+      <div class="status-left">
+        <span class="status-pill">NORMAL</span>
+        <span>utf-8</span>
+        <span>unix</span>
+        <span>py</span>
+      </div>
+      <div class="status-right">
+        <span>Ln 1, Col 1</span>
+        <span>100%</span>
+        <span>(c) <span id="year"></span></span>
+        <a class="status-link" href="./index.html">exit</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById("year").textContent = String(new Date().getFullYear());
+
+    const splash = document.getElementById("splash");
+    const cmdValue = document.getElementById("cmdValue");
+    const cmdHint = document.getElementById("cmdHint");
+    const menuItems = Array.from(document.querySelectorAll(".menu-item"));
+    const windowItems = Array.from(document.querySelectorAll(".vim-window"));
+    const treeItems = Array.from(document.querySelectorAll(".tree li[data-window]"));
+    const tabs = Array.from(document.querySelectorAll(".tab[data-window]"));
+    const bufferPath = document.getElementById("bufferPath");
+    let activeIndex = 0;
+    let typed = "";
+
+    const commands = menuItems.map(item => ({
+      key: item.dataset.key || "",
+      label: item.textContent.trim()
+    }));
+
+    function setActive(idx){
+      if (!menuItems.length) return;
+      activeIndex = (idx + menuItems.length) % menuItems.length;
+      menuItems.forEach((item, i)=>{
+        item.classList.toggle("active", i === activeIndex);
+      });
+    }
+
+    function updateTyped(value){
+      typed = value.toLowerCase();
+      cmdValue.textContent = typed;
+      if (!typed){
+        cmdHint.textContent = "Type `about`, `projects`, `skills`...";
+        return;
+      }
+      const match = commands.find(cmd => cmd.key.startsWith(typed));
+      if (match){
+        const idx = commands.findIndex(cmd => cmd.key === match.key);
+        if (idx >= 0) setActive(idx);
+        cmdHint.textContent = `Press Enter to open "${match.key}"`;
+      } else {
+        cmdHint.textContent = "No match. Try a different command.";
+      }
+    }
+
+    function openWindow(key){
+      const target = windowItems.find(win => win.dataset.window === key);
+      if (!target) return;
+      windowItems.forEach(win => win.classList.toggle("active", win === target));
+      treeItems.forEach(item => item.classList.toggle("active", item.dataset.window === key));
+      tabs.forEach(tab => tab.classList.toggle("active", tab.dataset.window === key));
+      const file = target.dataset.file || `${key}.md`;
+      if (bufferPath){
+        bufferPath.textContent = `/home/samyog/schoolportfolio/${file}`;
+      }
+      const cmdIndex = commands.findIndex(cmd => cmd.key === key);
+      if (cmdIndex >= 0) setActive(cmdIndex);
+    }
+
+    function openSection(key){
+      openWindow(key);
+      hideSplash();
+    }
+
+    function hideSplash(){
+      if (!splash) return;
+      splash.classList.add("is-hidden");
+      document.body.classList.remove("splash-active");
+      setTimeout(()=>{ splash.style.display = "none"; }, 260);
+    }
+
+    function showSplash(){
+      if (!splash) return;
+      splash.style.display = "grid";
+      splash.classList.remove("is-hidden");
+      document.body.classList.add("splash-active");
+      updateTyped("");
+      setActive(activeIndex);
+    }
+
+    function submitSelection(){
+      if (typed){
+        const exact = commands.find(cmd => cmd.key === typed);
+        if (exact){ openSection(exact.key); return; }
+        const match = commands.find(cmd => cmd.key.startsWith(typed));
+        if (match){ openSection(match.key); return; }
+      }
+      const current = commands[activeIndex];
+      if (current){ openSection(current.key); }
+    }
+
+    menuItems.forEach((item, idx)=>{
+      item.addEventListener("click", ()=>{
+        setActive(idx);
+        updateTyped(item.dataset.key || "");
+        submitSelection();
+      });
+    });
+
+    treeItems.forEach(item=>{
+      item.addEventListener("click", ()=>{
+        const key = item.dataset.window;
+        if (key) openWindow(key);
+      });
+    });
+
+    tabs.forEach(tab=>{
+      tab.addEventListener("click", ()=>{
+        const key = tab.dataset.window;
+        if (key) openWindow(key);
+      });
+    });
+
+    document.body.classList.add("splash-active");
+    updateTyped("");
+    setActive(0);
+    openWindow("about");
+
+    document.addEventListener("keydown", (e)=>{
+      const splashVisible = splash && splash.style.display !== "none" && !splash.classList.contains("is-hidden");
+
+      if (splashVisible){
+        if (e.key === "ArrowDown" || (e.ctrlKey && (e.key === "j" || e.key === "J"))){
+          e.preventDefault();
+          setActive(activeIndex + 1);
+          return;
+        }
+        if (e.key === "ArrowUp" || (e.ctrlKey && (e.key === "k" || e.key === "K"))){
+          e.preventDefault();
+          setActive(activeIndex - 1);
+          return;
+        }
+        if (e.key === "Enter"){
+          e.preventDefault();
+          submitSelection();
+          return;
+        }
+        if (e.key === "Backspace"){
+          e.preventDefault();
+          updateTyped(typed.slice(0, -1));
+          return;
+        }
+        if (e.key === "Escape"){
+          e.preventDefault();
+          updateTyped("");
+          return;
+        }
+        if (e.key.length === 1 && /[a-z0-9-]/i.test(e.key)){
+          e.preventDefault();
+          updateTyped(typed + e.key);
+        }
+        return;
+      }
+
+      if (e.key === ":" || e.key === "?"){
+        e.preventDefault();
+        showSplash();
+      }
+    });
+  </script>
+</body>
+</html>
